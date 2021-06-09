@@ -47,7 +47,7 @@ struct entity
 	void (*on_step)(struct entity *self, struct entity_step_data stepdata);
 	void (*on_collide)(struct entity *self, int x, int y);
 	void (*on_collide_with_entity)(struct entity *self, struct entity *other);
-	void (*on_spawn)(struct entity *self);
+	void (*on_spawn)(struct entity *self, void *data);
 	void (*on_remove)(struct entity *self);
 	void (*on_death)(struct entity *self);
 	void (*on_damage)(struct entity *self, int damage);
@@ -98,7 +98,7 @@ bool is_outside(int x, int y);
 struct node get_node(int x, int y);
 bool is_solid(int x, int y);
 bool move(struct entity *entity, int xoff, int yoff);
-void spawn(struct entity def, int x, int y);
+bool spawn(struct entity def, int x, int y, void *data);
 void add_health(struct entity *entity, int health);
 void add_score(int s);
 bool player_dead();
@@ -107,6 +107,7 @@ void light_color(struct color *color, double light);
 void mix_color(struct color *color, struct color other, double ratio);
 void register_air_function(struct generator_function func);
 void register_input_handler(unsigned char c, struct input_handler handler);
+void dir_to_xy(int dir, int *x, int *y);
 struct list *add_element(struct list *list, void *element);
 
 #endif

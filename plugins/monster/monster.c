@@ -9,8 +9,10 @@ struct monster_data
 	double timer;
 };
 
-static void monster_spawn(struct entity *self)
+static void monster_spawn(struct entity *self, void *data)
 {
+	(void) data;
+
 	self->meta = malloc(sizeof(struct monster_data));
 	((struct monster_data *) self->meta)->timer = 0.5;
 }
@@ -26,7 +28,7 @@ static void monster_step(struct entity *self, struct entity_step_data stepdata)
 	}
 }
 
-static void monster_on_collide_with_entity(struct entity *self, struct entity *other)
+static void monster_collide_with_entity(struct entity *self, struct entity *other)
 {
 	if (other == &player)
 		add_health(other, -1);
@@ -40,7 +42,7 @@ static void monster_death(struct entity *self)
 
 static void spawn_monster(int x, int y)
 {
-	spawn(monster, x, y);
+	spawn(monster, x, y, NULL);
 }
 
 __attribute__((constructor)) static void init()
@@ -59,7 +61,7 @@ __attribute__((constructor)) static void init()
 
 		.on_step = &monster_step,
 		.on_collide = NULL,
-		.on_collide_with_entity = &monster_on_collide_with_entity,
+		.on_collide_with_entity = &monster_collide_with_entity,
 		.on_spawn = &monster_spawn,
 		.on_remove = NULL,
 		.on_death = &monster_death,

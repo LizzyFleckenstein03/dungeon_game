@@ -15,7 +15,7 @@ static void apple_step(struct entity *self, struct entity_step_data stepdata)
 
 static void spawn_apple(int x, int y)
 {
-	spawn(apple, x, y);
+	spawn(apple, x, y, NULL);
 }
 
 __attribute__((constructor)) static void init()

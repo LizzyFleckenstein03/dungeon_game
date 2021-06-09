@@ -89,13 +89,13 @@ bool move(struct entity *entity, int xoff, int yoff)
 	}
 }
 
-void spawn(struct entity def, int x, int y)
+bool spawn(struct entity def, int x, int y, void *data)
 {
-	if (is_outside(x, y))
-		return;
+	if (is_solid(x, y))
+		return false;
 
 	if (def.collide_with_entities && entity_collision_map[x][y])
-		return;
+		return false;
 
 	def.x = x;
 	def.y = y;
@@ -109,7 +109,9 @@ void spawn(struct entity def, int x, int y)
 		entity_collision_map[x][y] = entity;
 
 	if (entity->on_spawn)
-		entity->on_spawn(entity);
+		entity->on_spawn(entity, data);
+
+	return true;
 }
 
 void add_health(struct entity *entity, int health)
@@ -170,6 +172,24 @@ void register_input_handler(unsigned char c, struct input_handler handler)
 	input_handlers[c] = buf;
 }
 
+void dir_to_xy(int dir, int *x, int *y)
+{
+	switch (dir) {
+		case 0:
+			(*x)++;
+			break;
+		case 1:
+			(*y)++;
+			break;
+		case 2:
+			(*x)--;
+			break;
+		case 3:
+			(*y)--;
+			break;
+	}
+}
+
 /* Player */
 
 static void player_death(struct entity *self)
@@ -225,21 +245,7 @@ static void generate_corridor(int lx, int ly, int ldir, bool off)
 		else
 			dir = rand() % 4;
 
-		switch (dir) {
-			case 0:
-				x++;
-				break;
-			case 1:
-				y++;
-				break;
-			case 2:
-				x--;
-				break;
-			case 3:
-				y--;
-				break;
-		}
-
+		dir_to_xy(dir, &x, &y);
 	} while (dir == ret || (! check_direction(x, y, dir) && --limit));
 
 	if (limit)
@@ -519,6 +525,9 @@ void game()
 
 				if (entity->meta)
 					free(entity->meta);
+
+				if (entity->collide_with_entities)
+					entity_collision_map[entity->x][entity->y] = NULL;
 
 				free(entity);
 				free(*ptr);
