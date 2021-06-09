@@ -67,6 +67,12 @@ struct generator_function
 	void (*callback)(int x, int y);
 };
 
+struct input_handler
+{
+	bool run_if_dead;
+	void (*callback)();
+};
+
 extern int score;
 
 extern struct color black;
@@ -84,6 +90,8 @@ extern struct entity *entity_collision_map[MAP_WIDTH][MAP_HEIGHT];
 
 extern struct list *air_functions;
 
+extern struct input_handler *input_handlers[256];
+
 void quit();
 struct color get_color(const char *str);
 bool is_outside(int x, int y);
@@ -98,6 +106,7 @@ void set_color(struct color color, bool bg);
 void light_color(struct color *color, double light);
 void mix_color(struct color *color, struct color other, double ratio);
 void register_air_function(struct generator_function func);
+void register_input_handler(unsigned char c, struct input_handler handler);
 struct list *add_element(struct list *list, void *element);
 
 #endif

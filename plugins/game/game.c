@@ -36,6 +36,8 @@ struct entity *entity_collision_map[MAP_WIDTH][MAP_HEIGHT] = {{NULL}};
 
 struct list *air_functions = NULL;
 
+struct input_handler *input_handlers[256] = {NULL};
+
 void quit()
 {
 	running = false;
@@ -155,6 +157,17 @@ void register_air_function(struct generator_function func)
 	*buf = func;
 
 	air_functions = add_element(air_functions, buf);
+}
+
+void register_input_handler(unsigned char c, struct input_handler handler)
+{
+	if (input_handlers[c])
+		return;
+
+	struct input_handler *buf = malloc(sizeof(struct input_handler));
+	*buf = handler;
+
+	input_handlers[c] = buf;
 }
 
 /* Player */
@@ -372,27 +385,12 @@ static void render(render_entity_list entity_list)
 
 /* Input */
 
-static void handle_input(char c)
+static void handle_input(unsigned char c)
 {
-	bool dead = player_dead();
+	struct input_handler *handler = input_handlers[c];
 
-	switch (c) {
-		case 'q':
-			quit();
-			break;
-		case 'w':
-			dead || move(&player, 0, -1);
-			break;
-		case 'a':
-			dead || move(&player, -1, 0);
-			break;
-		case 's':
-			dead || move(&player, 0, 1);
-			break;
-		case 'd':
-			dead || move(&player, 1, 0);
-			break;
-	}
+	if (handler && (handler->run_if_dead || ! player_dead()))
+		handler->callback();
 }
 
 /* Multithreading */
@@ -459,6 +457,11 @@ __attribute__ ((constructor)) static void init()
 	for (int x = 0; x < MAP_WIDTH; x++)
 		for (int y = 0; y < MAP_HEIGHT; y++)
 			map[x][y] = (struct node) {&wall};
+
+	register_input_handler('q', (struct input_handler) {
+		.run_if_dead = true,
+		.callback = &quit,
+	});
 }
 
 void game()
