@@ -332,7 +332,7 @@ static void render(render_entity_list entity_list)
 	set_color((struct color) {255, 0, 0}, false);
 
 	for (int i = 0; i < player.max_health; i++) {
-		if (i == player.health)
+		if (i >= player.health)
 			set_color(get_color("#5A5A5A"), false);
 		printf("\u2665 ");
 	}
