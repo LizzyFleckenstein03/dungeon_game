@@ -15,6 +15,10 @@ static void fireball_spawn(struct entity *self, void *data)
 {
 	self->meta = malloc(sizeof(struct fireball_data));
 	*((struct fireball_data *) self->meta) = *((struct fireball_data *) data);
+
+	self->color.r = clamp(self->color.r + rand() % 65 - 32, 0, 255);
+	self->color.g = clamp(self->color.g + rand() % 65 - 32, 0, 255);
+	self->color.b = clamp(self->color.b + rand() % 65 - 32, 0, 255);
 }
 
 static void fireball_step(struct entity *self, struct entity_step_data stepdata)

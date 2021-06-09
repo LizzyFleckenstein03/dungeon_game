@@ -108,6 +108,7 @@ void mix_color(struct color *color, struct color other, double ratio);
 void register_air_function(struct generator_function func);
 void register_input_handler(unsigned char c, struct input_handler handler);
 void dir_to_xy(int dir, int *x, int *y);
+int clamp(int v, int max, int min);
 struct list *add_element(struct list *list, void *element);
 
 #endif

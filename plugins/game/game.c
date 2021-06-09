@@ -190,6 +190,11 @@ void dir_to_xy(int dir, int *x, int *y)
 	}
 }
 
+int clamp(int v, int min, int max)
+{
+	return v < min ? min : v > max ? max : v;
+}
+
 /* Player */
 
 static void player_death(struct entity *self)
