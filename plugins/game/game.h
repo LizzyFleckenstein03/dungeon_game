@@ -50,6 +50,7 @@ struct entity
 	void (*on_spawn)(struct entity *self);
 	void (*on_remove)(struct entity *self);
 	void (*on_death)(struct entity *self);
+	void (*on_damage)(struct entity *self, int damage);
 };
 
 struct list
@@ -94,7 +95,8 @@ void add_health(struct entity *entity, int health);
 void add_score(int s);
 bool player_dead();
 void set_color(struct color color, bool bg);
-struct color light_color(struct color color, double light);
+void light_color(struct color *color, double light);
+void mix_color(struct color *color, struct color other, double ratio);
 void register_air_function(struct generator_function func);
 struct list *add_element(struct list *list, void *element);
 

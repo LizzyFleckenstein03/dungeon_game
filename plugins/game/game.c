@@ -14,6 +14,7 @@
 #include "game.h"
 
 bool running = true;
+double damage_overlay = 0.0;
 
 int score = 0;
 
@@ -115,6 +116,9 @@ void add_health(struct entity *entity, int health)
 
 	entity->health += health;
 
+	if (health < 0 && entity->on_damage)
+		entity->on_damage(entity, -health);
+
 	if (entity->health > entity->max_health)
 		entity->health = entity->max_health;
 	else if (entity->health <= 0 && was_alive && entity->on_death)
@@ -158,6 +162,11 @@ void register_air_function(struct generator_function func)
 static void player_death(struct entity *self)
 {
 	self->texture = "☠ ";
+}
+
+static void player_damage(struct entity *self, int damage)
+{
+	damage_overlay = (double) damage * 0.5;
 }
 
 /* Mapgen */
@@ -242,13 +251,34 @@ void set_color(struct color color, bool bg)
 	printf("\e[%u;2;%u;%u;%um", bg ? 48 : 38, color.r, color.g, color.b);
 }
 
-struct color light_color(struct color color, double light)
+void light_color(struct color *color, double light)
 {
-	return (struct color) {
-		color.r * light,
-		color.g * light,
-		color.b * light,
-	};
+	color->r *= light;
+	color->g *= light;
+	color->b *= light;
+}
+
+void mix_color(struct color *color, struct color other, double ratio)
+{
+	double ratio_total = ratio + 1;
+
+	color->r = (color->r + other.r * ratio) / ratio_total;
+	color->g = (color->g + other.g * ratio) / ratio_total;
+	color->b = (color->b + other.b * ratio) / ratio_total;
+}
+
+void render_color(struct color color, double light, bool bg)
+{
+	if (light <= 0.0) {
+		set_color(black, bg);
+	} else {
+		if (damage_overlay > 0.0)
+			mix_color(&color, get_color("#F20000"), damage_overlay * 2.0);
+
+		light_color(&color, light);
+
+		set_color(color, bg);
+	}
 }
 
 static void render(render_entity_list entity_list)
@@ -285,18 +315,14 @@ static void render(render_entity_list entity_list)
 			double dist = sqrt(x * x + y * y);
 			double light = 1.0 - (double) dist / (double) LIGHT;
 
-			if (light <= 0)
-				goto empty;
-
-			set_color(light_color(node.material->color, light), true);
+			render_color(node.material->color, light, true);
 
 			struct entity *entity = entity_list[x + LIGHT][y + LIGHT];
 
 			if (entity) {
-				set_color(entity->color, false);
+				render_color(entity->color, light, false);
 				printf("%s", entity->texture);
 			} else {
-				empty:
 				printf("  ");
 			}
 		}
@@ -425,6 +451,7 @@ __attribute__ ((constructor)) static void init()
 		.on_spawn = NULL,
 		.on_remove = NULL,
 		.on_death = &player_death,
+		.on_damage = &player_damage,
 	};
 
 	entity_collision_map[player.x][player.y] = &player;
@@ -467,6 +494,9 @@ void game()
 		ts_old = ts;
 
 		bool dead = player_dead();
+
+		if (! dead && damage_overlay > 0.0)
+			damage_overlay -= dtime;
 
 		render_entity_list render_list = {{NULL}};
 

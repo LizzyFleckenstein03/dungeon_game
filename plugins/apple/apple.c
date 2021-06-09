@@ -38,6 +38,7 @@ __attribute__((constructor)) static void init()
 		.on_spawn = NULL,
 		.on_remove = NULL,
 		.on_death = NULL,
+		.on_damage = NULL,
 	};
 
 	register_air_function((struct generator_function) {

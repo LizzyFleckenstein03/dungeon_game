@@ -63,6 +63,7 @@ __attribute__((constructor)) static void init()
 		.on_spawn = &monster_spawn,
 		.on_remove = NULL,
 		.on_death = &monster_death,
+		.on_damage = NULL,
 	};
 
 	register_air_function((struct generator_function) {
