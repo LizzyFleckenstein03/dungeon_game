@@ -73,6 +73,14 @@ struct input_handler
 	void (*callback)();
 };
 
+enum direction
+{
+	UP,
+	LEFT,
+	DOWN,
+	RIGHT,
+};
+
 extern int score;
 
 extern struct color black;
@@ -107,7 +115,7 @@ void light_color(struct color *color, double light);
 void mix_color(struct color *color, struct color other, double ratio);
 void register_air_function(struct generator_function func);
 void register_input_handler(unsigned char c, struct input_handler handler);
-void dir_to_xy(int dir, int *x, int *y);
+void dir_to_xy(enum direction dir, int *x, int *y);
 int clamp(int v, int max, int min);
 struct list *add_element(struct list *list, void *element);
 

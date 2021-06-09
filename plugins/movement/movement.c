@@ -1,23 +1,36 @@
 #include "../game/game.h"
 
+enum direction last_player_move;
+
+void move_player(enum direction dir)
+{
+	int x, y;
+	x = y = 0;
+
+	dir_to_xy(dir, &x, &y);
+	last_player_move = dir;
+
+	move(&player, x, y);
+}
+
 static void move_up()
 {
-	move(&player, 0, -1);
+	move_player(UP);
 }
 
 static void move_left()
 {
-	move(&player, -1, 0);
+	move_player(LEFT);
 }
 
 static void move_down()
 {
-	move(&player, 0, 1);
+	move_player(DOWN);
 }
 
 static void move_right()
 {
-	move(&player, 1, 0);
+	move_player(RIGHT);
 }
 
 __attribute__((constructor)) static void init()

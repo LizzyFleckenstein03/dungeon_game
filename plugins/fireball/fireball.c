@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "../game/game.h"
+#include "../movement/movement.h"
 
 static struct entity fireball;
 
@@ -44,35 +45,18 @@ static void fireball_collide_with_entity(struct entity *self, struct entity *oth
 	self->remove = true;
 }
 
-static bool try_shoot(int x, int y, int vx, int vy)
+static void shoot_fireball()
 {
-	x += vx;
-	y += vy;
+	int vx, vy;
+	vx = vy = 0;
 
-	return spawn(fireball, x, y, & (struct fireball_data) {
+	dir_to_xy(last_player_move, &vx, &vy);
+
+	spawn(fireball, player.x + vx, player.y + vy, & (struct fireball_data) {
 		.timer = 0.1,
 		.vx = vx,
 		.vy = vy,
 	});
-}
-
-static void shoot_fireball()
-{
-	int x, y;
-
-	x = player.x;
-	y = player.y;
-
-	for (int tries = 10; tries > 0; tries--) {
-		int vx, vy;
-
-		vx = vy = 0;
-
-		dir_to_xy(rand() % 4, &vx, &vy);
-
-		if (try_shoot(x, y, vx, vy))
-			return;
-	}
 }
 
 __attribute__((constructor)) static void init()

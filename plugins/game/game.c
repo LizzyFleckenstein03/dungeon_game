@@ -172,20 +172,20 @@ void register_input_handler(unsigned char c, struct input_handler handler)
 	input_handlers[c] = buf;
 }
 
-void dir_to_xy(int dir, int *x, int *y)
+void dir_to_xy(enum direction dir, int *x, int *y)
 {
 	switch (dir) {
-		case 0:
-			(*x)++;
+		case UP:
+			(*y)--;
 			break;
-		case 1:
-			(*y)++;
-			break;
-		case 2:
+		case LEFT:
 			(*x)--;
 			break;
-		case 3:
-			(*y)--;
+		case DOWN:
+			(*y)++;
+			break;
+		case RIGHT:
+			(*x)++;
 			break;
 	}
 }
@@ -209,15 +209,15 @@ static void player_damage(struct entity *self, int damage)
 
 /* Mapgen */
 
-static bool check_direction(int x, int y, int dir)
+static bool check_direction(int x, int y, enum direction dir)
 {
 	if (dir % 2 == 0)
-		return is_solid(x, y + 1) && is_solid(x, y - 1) && (is_solid(x + 1, y) || rand() % 3 > 1) && (is_solid(x - 1, y) || rand() % 3 > 1);
-	else
 		return is_solid(x + 1, y) && is_solid(x - 1, y) && (is_solid(x, y + 1) || rand() % 3 > 1) && (is_solid(x, y - 1) || rand() % 3 > 1);
+	else
+		return is_solid(x, y + 1) && is_solid(x, y - 1) && (is_solid(x + 1, y) || rand() % 3 > 1) && (is_solid(x - 1, y) || rand() % 3 > 1);
 }
 
-static void generate_corridor(int lx, int ly, int ldir, bool off)
+static void generate_corridor(int lx, int ly, enum direction ldir, bool off)
 {
 	if (is_outside(lx, ly))
 		return;
@@ -237,8 +237,11 @@ static void generate_corridor(int lx, int ly, int ldir, bool off)
 		}
 	}
 
-	int x, y, dir;
-	int ret = (ldir + 2) % 4;
+	int x, y;
+
+	enum direction dir;
+	enum direction ret = (ldir + 2) % 4;
+
 	int limit = 50;
 
 	do {
@@ -262,7 +265,7 @@ static void generate_corridor(int lx, int ly, int ldir, bool off)
 
 static void generate_corridor_random(int x, int y)
 {
-	int dir = rand() % 4;
+	enum direction dir = rand() % 4;
 
 	generate_corridor(x, y, dir, false);
 	generate_corridor(x, y, (dir + 2) % 4, false);
