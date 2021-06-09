@@ -126,6 +126,11 @@ void add_score(int s)
 	score += s;
 }
 
+bool player_dead()
+{
+	return player.health <= 0;
+}
+
 struct list *add_element(struct list *list, void *element)
 {
 	struct list **ptr;
@@ -152,8 +157,7 @@ void register_air_function(struct generator_function func)
 
 static void player_death(struct entity *self)
 {
-	(void) self;
-	quit();
+	self->texture = "☠ ";
 }
 
 /* Mapgen */
@@ -344,21 +348,23 @@ static void render(render_entity_list entity_list)
 
 static void handle_input(char c)
 {
+	bool dead = player_dead();
+
 	switch (c) {
 		case 'q':
 			quit();
 			break;
 		case 'w':
-			move(&player, 0, -1);
+			dead || move(&player, 0, -1);
 			break;
 		case 'a':
-			move(&player, -1, 0);
+			dead || move(&player, -1, 0);
 			break;
 		case 's':
-			move(&player, 0, 1);
+			dead || move(&player, 0, 1);
 			break;
 		case 'd':
-			move(&player, 1, 0);
+			dead || move(&player, 1, 0);
 			break;
 	}
 }
@@ -460,6 +466,8 @@ void game()
 		double dtime = (double) (ts.tv_sec - ts_old.tv_sec) + (double) (ts.tv_nsec - ts_old.tv_nsec) / 1000000000.0;
 		ts_old = ts;
 
+		bool dead = player_dead();
+
 		render_entity_list render_list = {{NULL}};
 
 		for (struct list **ptr = &entities; *ptr != NULL; ) {
@@ -492,7 +500,7 @@ void game()
 			if (visible)
 				render_list[dx + LIGHT][dy + LIGHT] = entity;
 
-			if (entity->on_step)
+			if (! dead && entity->on_step)
 				entity->on_step(entity, (struct entity_step_data) {
 					.dtime = dtime,
 					.visible = visible,

@@ -37,7 +37,7 @@ struct entity
 	const char *name;
 	int x, y;
 	struct color color;
-	char texture[8];
+	const char *texture;
 	bool remove;
 	void *meta;
 	int health;
@@ -92,6 +92,7 @@ bool move(struct entity *entity, int xoff, int yoff);
 void spawn(struct entity def, int x, int y);
 void add_health(struct entity *entity, int health);
 void add_score(int s);
+bool player_dead();
 void set_color(struct color color, bool bg);
 struct color light_color(struct color color, double light);
 void register_air_function(struct generator_function func);
