@@ -179,7 +179,7 @@ static void player_death(struct entity *self)
 
 static void player_damage(struct entity *self, int damage)
 {
-	damage_overlay = (double) damage * 0.5;
+	damage_overlay += (double) damage * 0.5;
 }
 
 /* Mapgen */
@@ -498,8 +498,12 @@ void game()
 
 		bool dead = player_dead();
 
-		if (! dead && damage_overlay > 0.0)
+		if (! dead && damage_overlay > 0.0) {
 			damage_overlay -= dtime;
+
+			if (damage_overlay < 0.0)
+				damage_overlay = 0.0;
+		}
 
 		render_entity_list render_list = {{NULL}};
 
