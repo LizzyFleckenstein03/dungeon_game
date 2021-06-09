@@ -267,10 +267,11 @@ void mix_color(struct color *color, struct color other, double ratio)
 	color->b = (color->b + other.b * ratio) / ratio_total;
 }
 
-void render_color(struct color color, double light, bool bg)
+static bool render_color(struct color color, double light, bool bg)
 {
 	if (light <= 0.0) {
 		set_color(black, bg);
+		return false;
 	} else {
 		if (damage_overlay > 0.0)
 			mix_color(&color, get_color("#F20000"), damage_overlay * 2.0);
@@ -278,6 +279,7 @@ void render_color(struct color color, double light, bool bg)
 		light_color(&color, light);
 
 		set_color(color, bg);
+		return true;
 	}
 }
 
@@ -319,12 +321,10 @@ static void render(render_entity_list entity_list)
 
 			struct entity *entity = entity_list[x + LIGHT][y + LIGHT];
 
-			if (entity) {
-				render_color(entity->color, light, false);
+			if (entity && render_color(entity->color, light, false))
 				printf("%s", entity->texture);
-			} else {
+			else
 				printf("  ");
-			}
 		}
 
 		set_color(black, true);
