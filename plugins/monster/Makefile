@@ -1,2 +1,4 @@
-monster.so: monster.c ../game/game.h
-	cc -g -shared -fpic -o monster.so monster.c
+plugins/monster/monster.so: plugins/monster/monster.c plugins/game/game.h
+	cc -g -shared -fpic -o plugins/monster/monster.so plugins/monster/monster.c
+
+PLUGINS := ${PLUGINS} plugins/monster/monster.so

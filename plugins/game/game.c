@@ -11,7 +11,7 @@
 #include <sys/ioctl.h>
 #include <math.h>
 #include <pthread.h>
-#include "dungeon.h"
+#include "game.h"
 
 bool running = true;
 

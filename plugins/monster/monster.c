@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stddef.h>
-#include "dungeon.h"
+#include "../game/game.h"
 
 static struct entity monster;
 
