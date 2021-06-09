@@ -111,11 +111,13 @@ void spawn(struct entity def, int x, int y)
 
 void add_health(struct entity *entity, int health)
 {
+	bool was_alive = entity->health > 0;
+
 	entity->health += health;
 
 	if (entity->health > entity->max_health)
 		entity->health = entity->max_health;
-	else if (entity->health <= 0 && entity->on_death)
+	else if (entity->health <= 0 && was_alive && entity->on_death)
 		entity->on_death(entity);
 }
 
