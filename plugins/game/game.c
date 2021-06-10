@@ -250,14 +250,6 @@ static void player_damage(struct entity *self, int damage)
 
 /* Mapgen */
 
-static bool check_direction(int x, int y, enum direction dir)
-{
-	if (dir % 2 == 0)
-		return is_solid(x + 1, y) && is_solid(x - 1, y) && (is_solid(x, y + 1) || rand() % 3 > 1) && (is_solid(x, y - 1) || rand() % 3 > 1);
-	else
-		return is_solid(x, y + 1) && is_solid(x, y - 1) && (is_solid(x + 1, y) || rand() % 3 > 1) && (is_solid(x - 1, y) || rand() % 3 > 1);
-}
-
 static void mapgen_set_air(int x, int y)
 {
 	if (is_outside(x, y))
@@ -275,8 +267,8 @@ static void mapgen_set_air(int x, int y)
 
 static void generate_room(int origin_x, int origin_y)
 {
-	int left = 5 + rand() % 15;
-	int right = 5 + rand() % 15;
+	int left = 5 + rand() % 10;
+	int right = 5 + rand() % 10;
 
 	int up = 0;
 	int down = 0;
@@ -293,6 +285,14 @@ static void generate_room(int origin_x, int origin_y)
 		for (int y = -up; y <= down; y++)
 			mapgen_set_air(origin_x + x, origin_y + y);
 	}
+}
+
+static bool check_direction(int x, int y, enum direction dir)
+{
+	if (dir % 2 == 0)
+		return is_solid(x + 1, y) && is_solid(x - 1, y) && (is_solid(x, y + 1) || rand() % 3 > 1) && (is_solid(x, y - 1) || rand() % 3 > 1);
+	else
+		return is_solid(x, y + 1) && is_solid(x, y - 1) && (is_solid(x + 1, y) || rand() % 3 > 1) && (is_solid(x - 1, y) || rand() % 3 > 1);
 }
 
 static void generate_corridor(int lx, int ly, enum direction ldir)
