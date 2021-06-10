@@ -369,7 +369,7 @@ static void render_map(struct winsize ws)
 			printf(" ");
 	}
 
-	for (int i = 0; i < rows_left + 1; i++)
+	for (int i = 0; i < rows_left; i++)
 		for (int i = 0; i < ws.ws_col; i++)
 			printf(" ");
 }

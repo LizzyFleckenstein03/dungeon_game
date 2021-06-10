@@ -7,7 +7,7 @@ static struct color gray;
 static void render_healthbar(struct winsize ws)
 {
 	int y = max(ws.ws_row - 2, 0);
-	int x = max(ws.ws_col / 2 - player.max_health, 0);
+	int x = max(ws.ws_col / 2 - player.max_health / 2, 0);
 
 	printf("\e[%u;%uH", y, x);
 
