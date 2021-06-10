@@ -258,20 +258,54 @@ static bool check_direction(int x, int y, enum direction dir)
 		return is_solid(x, y + 1) && is_solid(x, y - 1) && (is_solid(x + 1, y) || rand() % 3 > 1) && (is_solid(x - 1, y) || rand() % 3 > 1);
 }
 
+static void mapgen_set_air(int x, int y)
+{
+	if (is_outside(x, y))
+		return;
+	if (map[x][y].material == &air)
+		return;
+	map[x][y] = (struct node) {&air};
+	for (struct list *ptr = air_functions; ptr != NULL; ptr = ptr->next) {
+		struct generator_function *func = ptr->element;
+
+		if (rand() % func->chance == 0)
+			func->callback(x, y);
+	}
+}
+
+static void generate_room(int origin_x, int origin_y)
+{
+	int left = 5 + rand() % 15;
+	int right = 5 + rand() % 15;
+
+	int up = 0;
+	int down = 0;
+
+	for (int x = -left; x <= right; x++) {
+		if (x < 0) {
+			up += rand() % 2;
+			down += rand() % 2;
+		} else {
+			up -= rand() % 2;
+			down -= rand() % 2;
+		}
+
+		for (int y = -up; y <= down; y++)
+			mapgen_set_air(origin_x + x, origin_y + y);
+	}
+}
+
 static void generate_corridor(int lx, int ly, enum direction ldir)
 {
 	if (is_outside(lx, ly))
 		return;
 
-	map[lx][ly] = (struct node) {&air};
-
-	for (struct list *ptr = air_functions; ptr != NULL; ptr = ptr->next) {
-		struct generator_function *func = ptr->element;
-
-		if (! func->chance || rand() % func->chance == 0) {
-			func->callback(lx, ly);
-		}
+	if (rand() % 200 == 0) {
+		generate_room(lx, ly);
+		return;
 	}
+
+	mapgen_set_air(lx, ly);
 
 	int x, y;
 
