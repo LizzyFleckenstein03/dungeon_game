@@ -258,15 +258,10 @@ static bool check_direction(int x, int y, enum direction dir)
 		return is_solid(x, y + 1) && is_solid(x, y - 1) && (is_solid(x + 1, y) || rand() % 3 > 1) && (is_solid(x - 1, y) || rand() % 3 > 1);
 }
 
-static void generate_corridor(int lx, int ly, enum direction ldir, bool off)
+static void generate_corridor(int lx, int ly, enum direction ldir)
 {
 	if (is_outside(lx, ly))
 		return;
-
-	/*
-	if (off && rand() % 100 == 0)
-		return;
-	*/
 
 	map[lx][ly] = (struct node) {&air};
 
@@ -298,18 +293,18 @@ static void generate_corridor(int lx, int ly, enum direction ldir, bool off)
 	} while (dir == ret || (! check_direction(x, y, dir) && --limit));
 
 	if (limit)
-		generate_corridor(x, y, dir, off);
+		generate_corridor(x, y, dir);
 
 	if (rand() % 20 == 0)
-		generate_corridor(lx, ly, ldir, true);
+		generate_corridor(lx, ly, ldir);
 }
 
 static void generate_corridor_random(int x, int y)
 {
 	enum direction dir = rand() % 4;
 
-	generate_corridor(x, y, dir, false);
-	generate_corridor(x, y, (dir + 2) % 4, false);
+	generate_corridor(x, y, dir);
+	generate_corridor(x, y, (dir + 2) % 4);
 }
 
 /* Rendering */
