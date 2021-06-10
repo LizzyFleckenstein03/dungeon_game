@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "../game/game.h"
+#include "../score/score.h"
 
 static struct entity monster;
 

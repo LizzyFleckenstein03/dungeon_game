@@ -8,15 +8,12 @@
 #include <time.h>
 #include <signal.h>
 #include <termios.h>
-#include <sys/ioctl.h>
 #include <math.h>
 #include <pthread.h>
 #include "game.h"
+#define MAKEBUF(type) type *buf = malloc(sizeof(type)); *buf = arg;
 
-bool running = true;
-double damage_overlay = 0.0;
-
-int score = 0;
+/* Shared variables */
 
 struct color black = {0, 0, 0};
 
@@ -32,16 +29,20 @@ struct list *entities = & (struct list) {
 	.next = NULL,
 };
 
+/* Private variables */
+
 struct entity *entity_collision_map[MAP_WIDTH][MAP_HEIGHT] = {{NULL}};
 
-struct list *air_functions = NULL;
+static bool running = true;
+static double damage_overlay = 0.0;
+static struct color damage_overlay_color;
 
-struct input_handler *input_handlers[256] = {NULL};
+static struct list *air_functions = NULL;
+static struct input_handler *input_handlers[256] = {NULL};
+static struct entity *render_entities[LIGHT * 2 + 1][LIGHT * 2 + 1];
+static struct list *render_components = NULL;
 
-void quit()
-{
-	running = false;
-}
+/* Helper functions */
 
 struct color get_color(const char *str)
 {
@@ -50,14 +51,96 @@ struct color get_color(const char *str)
 	return (struct color) {r, g, b};
 }
 
-bool is_outside(int x, int y)
+void set_color(struct color color, bool bg)
 {
-	return x >= MAP_WIDTH || x < 0 || y >= MAP_HEIGHT || y < 0;
+	printf("\e[%u;2;%u;%u;%um", bg ? 48 : 38, color.r, color.g, color.b);
 }
+
+void light_color(struct color *color, double light)
+{
+	color->r *= light;
+	color->g *= light;
+	color->b *= light;
+}
+
+void mix_color(struct color *color, struct color other, double ratio)
+{
+	double ratio_total = ratio + 1;
+
+	color->r = (color->r + other.r * ratio) / ratio_total;
+	color->g = (color->g + other.g * ratio) / ratio_total;
+	color->b = (color->b + other.b * ratio) / ratio_total;
+}
+
+void dir_to_xy(enum direction dir, int *x, int *y)
+{
+	switch (dir) {
+		case UP:
+			(*y)--;
+			break;
+		case LEFT:
+			(*x)--;
+			break;
+		case DOWN:
+			(*y)++;
+			break;
+		case RIGHT:
+			(*x)++;
+			break;
+	}
+}
+
+struct list *add_element(struct list *list, void *element)
+{
+	struct list **ptr;
+
+	for (ptr = &list; *ptr != NULL; ptr = &(*ptr)->next)
+		;
+
+	*ptr = malloc(sizeof(struct list));
+	(*ptr)->element = element;
+	(*ptr)->next = NULL;
+
+	return list;
+}
+
+int clamp(int v, int min, int max)
+{
+	return v < min ? min : v > max ? max : v;
+}
+
+int max(int a, int b)
+{
+	return a > b ? a : b;
+}
+
+int min(int a, int b)
+{
+	return a < b ? a : b;
+}
+
+/* Game-related utility functions */
+
+void quit()
+{
+	running = false;
+}
+
+bool player_dead()
+{
+	return player.health <= 0;
+}
+
+/* Map functions */
 
 struct node get_node(int x, int y)
 {
 	return is_outside(x, y) ? (struct node) {&outside} : map[x][y];
+}
+
+bool is_outside(int x, int y)
+{
+	return x >= MAP_WIDTH || x < 0 || y >= MAP_HEIGHT || y < 0;
 }
 
 bool is_solid(int x, int y)
@@ -65,29 +148,7 @@ bool is_solid(int x, int y)
 	return get_node(x, y).material->solid;
 }
 
-bool move(struct entity *entity, int xoff, int yoff)
-{
-	int x, y;
-
-	x = entity->x + xoff;
-	y = entity->y + yoff;
-
-	if (is_solid(x, y)) {
-		if (entity->on_collide)
-			entity->on_collide(entity, x, y);
-		return false;
-	} else if (entity->collide_with_entities && entity_collision_map[x][y]) {
-		if (entity->on_collide_with_entity)
-			entity->on_collide_with_entity(entity, entity_collision_map[x][y]);
-		return false;
-	} else {
-		entity_collision_map[entity->x][entity->y] = NULL;
-		entity->x = x;
-		entity->y = y;
-		entity_collision_map[entity->x][entity->y] = entity;
-		return true;
-	}
-}
+/* Entity functions */
 
 bool spawn(struct entity def, int x, int y, void *data)
 {
@@ -114,6 +175,30 @@ bool spawn(struct entity def, int x, int y, void *data)
 	return true;
 }
 
+bool move(struct entity *entity, int xoff, int yoff)
+{
+	int x, y;
+
+	x = entity->x + xoff;
+	y = entity->y + yoff;
+
+	if (is_solid(x, y)) {
+		if (entity->on_collide)
+			entity->on_collide(entity, x, y);
+		return false;
+	} else if (entity->collide_with_entities && entity_collision_map[x][y]) {
+		if (entity->on_collide_with_entity)
+			entity->on_collide_with_entity(entity, entity_collision_map[x][y]);
+		return false;
+	} else {
+		entity_collision_map[entity->x][entity->y] = NULL;
+		entity->x = x;
+		entity->y = y;
+		entity_collision_map[entity->x][entity->y] = entity;
+		return true;
+	}
+}
+
 void add_health(struct entity *entity, int health)
 {
 	bool was_alive = entity->health > 0;
@@ -129,71 +214,27 @@ void add_health(struct entity *entity, int health)
 		entity->on_death(entity);
 }
 
-void add_score(int s)
+/* Register callback functions */
+
+void register_air_function(struct generator_function arg)
 {
-	score += s;
-}
-
-bool player_dead()
-{
-	return player.health <= 0;
-}
-
-struct list *add_element(struct list *list, void *element)
-{
-	struct list **ptr;
-
-	for (ptr = &list; *ptr != NULL; ptr = &(*ptr)->next)
-		;
-
-	*ptr = malloc(sizeof(struct list));
-	(*ptr)->element = element;
-	(*ptr)->next = NULL;
-
-	return list;
-}
-
-void register_air_function(struct generator_function func)
-{
-	struct generator_function *buf = malloc(sizeof(struct generator_function));
-	*buf = func;
-
+	MAKEBUF(struct generator_function);
 	air_functions = add_element(air_functions, buf);
 }
 
-void register_input_handler(unsigned char c, struct input_handler handler)
+void register_input_handler(unsigned char c, struct input_handler arg)
 {
 	if (input_handlers[c])
 		return;
 
-	struct input_handler *buf = malloc(sizeof(struct input_handler));
-	*buf = handler;
-
+	MAKEBUF(struct input_handler);
 	input_handlers[c] = buf;
 }
 
-void dir_to_xy(enum direction dir, int *x, int *y)
+void register_render_component(void (*arg)(struct winsize ws))
 {
-	switch (dir) {
-		case UP:
-			(*y)--;
-			break;
-		case LEFT:
-			(*x)--;
-			break;
-		case DOWN:
-			(*y)++;
-			break;
-		case RIGHT:
-			(*x)++;
-			break;
-	}
-}
-
-int clamp(int v, int min, int max)
-{
-	return v < min ? min : v > max ? max : v;
-}
+	render_components = add_element(render_components, arg);
+};
 
 /* Player */
 
@@ -273,27 +314,6 @@ static void generate_corridor_random(int x, int y)
 
 /* Rendering */
 
-void set_color(struct color color, bool bg)
-{
-	printf("\e[%u;2;%u;%u;%um", bg ? 48 : 38, color.r, color.g, color.b);
-}
-
-void light_color(struct color *color, double light)
-{
-	color->r *= light;
-	color->g *= light;
-	color->b *= light;
-}
-
-void mix_color(struct color *color, struct color other, double ratio)
-{
-	double ratio_total = ratio + 1;
-
-	color->r = (color->r + other.r * ratio) / ratio_total;
-	color->g = (color->g + other.g * ratio) / ratio_total;
-	color->b = (color->b + other.b * ratio) / ratio_total;
-}
-
 static bool render_color(struct color color, double light, bool bg)
 {
 	if (light <= 0.0) {
@@ -301,7 +321,7 @@ static bool render_color(struct color color, double light, bool bg)
 		return false;
 	} else {
 		if (damage_overlay > 0.0)
-			mix_color(&color, get_color("#F20000"), damage_overlay * 2.0);
+			mix_color(&color, damage_overlay_color, damage_overlay * 2.0);
 
 		light_color(&color, light);
 
@@ -310,20 +330,13 @@ static bool render_color(struct color color, double light, bool bg)
 	}
 }
 
-static void render(render_entity_list entity_list)
+static void render_map(struct winsize ws)
 {
-	printf("\e[2J\e[0;0H");
-
-	struct winsize ws;
-	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
-
 	int cols = ws.ws_col / 2 - LIGHT * 2;
 	int rows = ws.ws_row / 2 - LIGHT;
 
 	int cols_left = ws.ws_col - cols - (LIGHT * 2 + 1) * 2;
 	int rows_left = ws.ws_row - rows - (LIGHT * 2 + 1);
-
-	set_color(black, true);
 
 	for (int i = 0; i < rows; i++)
 		for (int i = 0; i < ws.ws_col; i++)
@@ -346,7 +359,8 @@ static void render(render_entity_list entity_list)
 
 			render_color(node.material->color, light, true);
 
-			struct entity *entity = entity_list[x + LIGHT][y + LIGHT];
+			struct entity *entity = render_entities[x + LIGHT][y + LIGHT];
+			render_entities[x + LIGHT][y + LIGHT] = NULL;
 
 			if (entity && render_color(entity->color, light, false))
 				printf("%s", entity->texture);
@@ -363,41 +377,33 @@ static void render(render_entity_list entity_list)
 	for (int i = 0; i < rows_left + 1; i++)
 		for (int i = 0; i < ws.ws_col; i++)
 			printf(" ");
+}
 
-	printf("\e[0;0H\e[39m");
+static void render()
+{
+	printf("\e[2J");
 
-	printf("\e[32m\e[3mScore:\e[23m %d\e[39m", score);
+	struct winsize ws;
+	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
 
-	printf("\e[0;0");
+	for (struct list *ptr = render_components; ptr != NULL; ptr = ptr->next) {
+		printf("\e[0m\e[0;0H");
+		set_color(black, true);
 
-	for (int i = 0; i < rows; i++)
-		printf("\n");
-
-	printf("\t\e[1mInventory\e[22m\n\n");
-	printf("\t0x\t\e[3mNothing\e[23m\n");
-
-	printf("\e[0;0H");
-
-	for (int i = 0; i < ws.ws_row - 2; i++)
-		printf("\n");
-
-	int hearts_cols = ws.ws_col / 2 - player.max_health;
-
-	for (int i = 0; i < hearts_cols; i++)
-		printf(" ");
-
-	set_color((struct color) {255, 0, 0}, false);
-
-	for (int i = 0; i < player.max_health; i++) {
-		if (i >= player.health)
-			set_color(get_color("#5A5A5A"), false);
-		printf("\u2665 ");
+		((void (*)(struct winsize ws)) ptr->element)(ws);
 	}
 
-	printf("\e[39m\n");
+	fflush(stdout);
 }
 
 /* Input */
+
+static void handle_interrupt(int signal)
+{
+	(void) signal;
+
+	quit();
+}
 
 static void handle_input(unsigned char c)
 {
@@ -405,15 +411,6 @@ static void handle_input(unsigned char c)
 
 	if (handler && (handler->run_if_dead || ! player_dead()))
 		handler->callback();
-}
-
-/* Multithreading */
-
-static void handle_interrupt(int signal)
-{
-	(void) signal;
-
-	running = false;
 }
 
 static void *input_thread(void *unused)
@@ -427,6 +424,103 @@ static void *input_thread(void *unused)
 }
 
 /* Main Game */
+
+void game()
+{
+	srand(time(0));
+
+	struct sigaction sa;
+	sa.sa_handler = &handle_interrupt;
+	sigaction(SIGINT, &sa, NULL);
+
+	generate_corridor_random(player.x, player.y);
+
+	for (int i = 0; i < 50; i++)
+		generate_corridor_random(rand() % MAP_WIDTH, rand() % MAP_HEIGHT);
+
+	struct termios oldtio, newtio;
+	tcgetattr(STDIN_FILENO, &oldtio);
+	newtio = oldtio;
+	newtio.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr(STDIN_FILENO, TCSANOW, &newtio);
+
+	printf("\e[?1049h\e[?25l");
+
+	pthread_t input_thread_id;
+	pthread_create(&input_thread_id, NULL, &input_thread, NULL);
+
+	struct timespec ts, ts_old;
+	clock_gettime(CLOCK_REALTIME, &ts_old);
+
+	while (running) {
+		clock_gettime(CLOCK_REALTIME, &ts);
+		double dtime = (double) (ts.tv_sec - ts_old.tv_sec) + (double) (ts.tv_nsec - ts_old.tv_nsec) / 1000000000.0;
+		ts_old = ts;
+
+		bool dead = player_dead();
+
+		if (! dead && damage_overlay > 0.0) {
+			damage_overlay -= dtime;
+
+			if (damage_overlay < 0.0)
+				damage_overlay = 0.0;
+		}
+
+		for (struct list **ptr = &entities; *ptr != NULL; ) {
+			struct entity *entity = (*ptr)->element;
+
+			if (entity->remove) {
+				assert(entity != &player);
+				struct list *next = (*ptr)->next;
+
+				if (entity->on_remove)
+					entity->on_remove(entity);
+
+				if (entity->meta)
+					free(entity->meta);
+
+				if (entity->collide_with_entities)
+					entity_collision_map[entity->x][entity->y] = NULL;
+
+				free(entity);
+				free(*ptr);
+
+				*ptr = next;
+				continue;
+			}
+
+			int dx, dy;
+
+			dx = entity->x - player.x;
+			dy = entity->y - player.y;
+
+			bool visible = abs(dx) <= LIGHT && abs(dy) <= LIGHT;
+
+			if (visible)
+				render_entities[dx + LIGHT][dy + LIGHT] = entity;
+
+			if (! dead && entity->on_step)
+				entity->on_step(entity, (struct entity_step_data) {
+					.dtime = dtime,
+					.visible = visible,
+					.dx = dx,
+					.dy = dy,
+				});
+
+			ptr = &(*ptr)->next;
+		}
+
+		render();
+
+		// there is no such thing as glfwSwapBuffers, so we just wait 1 / 60 seconds to prevent artifacts
+		usleep(1000000 / 60);
+	}
+
+	printf("\e[?1049l\e[?25h");
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldtio);
+}
+
+/* Initializer function */
 
 __attribute__ ((constructor)) static void init()
 {
@@ -476,103 +570,10 @@ __attribute__ ((constructor)) static void init()
 		.run_if_dead = true,
 		.callback = &quit,
 	});
-}
 
-void game()
-{
-	srand(time(0));
+	register_render_component(&render_map);
 
-	struct sigaction sa;
-	sa.sa_handler = &handle_interrupt;
-	sigaction(SIGINT, &sa, NULL);
-
-	generate_corridor_random(player.x, player.y);
-
-	for (int i = 0; i < 50; i++)
-		generate_corridor_random(rand() % MAP_WIDTH, rand() % MAP_HEIGHT);
-
-	struct termios oldtio, newtio;
-	tcgetattr(STDIN_FILENO, &oldtio);
-	newtio = oldtio;
-	newtio.c_lflag &= ~(ICANON | ECHO);
-	tcsetattr(STDIN_FILENO, TCSANOW, &newtio);
-
-	printf("\e[?1049h\e[?25l");
-
-	pthread_t input_thread_id;
-	pthread_create(&input_thread_id, NULL, &input_thread, NULL);
-
-	struct timespec ts, ts_old;
-	clock_gettime(CLOCK_REALTIME, &ts_old);
-
-	while (running) {
-		clock_gettime(CLOCK_REALTIME, &ts);
-		double dtime = (double) (ts.tv_sec - ts_old.tv_sec) + (double) (ts.tv_nsec - ts_old.tv_nsec) / 1000000000.0;
-		ts_old = ts;
-
-		bool dead = player_dead();
-
-		if (! dead && damage_overlay > 0.0) {
-			damage_overlay -= dtime;
-
-			if (damage_overlay < 0.0)
-				damage_overlay = 0.0;
-		}
-
-		render_entity_list render_list = {{NULL}};
-
-		for (struct list **ptr = &entities; *ptr != NULL; ) {
-			struct entity *entity = (*ptr)->element;
-
-			if (entity->remove) {
-				assert(entity != &player);
-				struct list *next = (*ptr)->next;
-
-				if (entity->on_remove)
-					entity->on_remove(entity);
-
-				if (entity->meta)
-					free(entity->meta);
-
-				if (entity->collide_with_entities)
-					entity_collision_map[entity->x][entity->y] = NULL;
-
-				free(entity);
-				free(*ptr);
-
-				*ptr = next;
-				continue;
-			}
-
-			int dx, dy;
-
-			dx = entity->x - player.x;
-			dy = entity->y - player.y;
-
-			bool visible = abs(dx) <= LIGHT && abs(dy) <= LIGHT;
-
-			if (visible)
-				render_list[dx + LIGHT][dy + LIGHT] = entity;
-
-			if (! dead && entity->on_step)
-				entity->on_step(entity, (struct entity_step_data) {
-					.dtime = dtime,
-					.visible = visible,
-					.dx = dx,
-					.dy = dy,
-				});
-
-			ptr = &(*ptr)->next;
-		}
-
-		render(render_list);
-
-		// there is no such thing as glfwSwapBuffers, so we just wait 1 / 60 seconds to prevent artifacts
-		usleep(1000000 / 60);
-	}
-
-	printf("\e[?1049l\e[?25h");
-	tcsetattr(STDIN_FILENO, TCSANOW, &oldtio);
+	damage_overlay_color = get_color("#F20000");
 }
 
 /* Use later */

@@ -2,6 +2,7 @@
 #define _GAME_H_
 
 #include <stdbool.h>
+#include <sys/ioctl.h>
 #define MAP_HEIGHT 1000
 #define MAP_WIDTH 1000
 #define LIGHT 10
@@ -59,8 +60,6 @@ struct list
 	struct list *next;
 };
 
-typedef struct entity *render_entity_list[LIGHT * 2 + 1][LIGHT * 2 + 1];
-
 struct generator_function
 {
 	int chance;
@@ -81,8 +80,6 @@ enum direction
 	RIGHT,
 };
 
-extern int score;
-
 extern struct color black;
 
 extern struct material wall;
@@ -96,27 +93,29 @@ extern struct list *entities;
 
 extern struct entity *entity_collision_map[MAP_WIDTH][MAP_HEIGHT];
 
-extern struct list *air_functions;
-
-extern struct input_handler *input_handlers[256];
-
-void quit();
 struct color get_color(const char *str);
-bool is_outside(int x, int y);
-struct node get_node(int x, int y);
-bool is_solid(int x, int y);
-bool move(struct entity *entity, int xoff, int yoff);
-bool spawn(struct entity def, int x, int y, void *data);
-void add_health(struct entity *entity, int health);
-void add_score(int s);
-bool player_dead();
 void set_color(struct color color, bool bg);
 void light_color(struct color *color, double light);
 void mix_color(struct color *color, struct color other, double ratio);
-void register_air_function(struct generator_function func);
-void register_input_handler(unsigned char c, struct input_handler handler);
 void dir_to_xy(enum direction dir, int *x, int *y);
-int clamp(int v, int max, int min);
 struct list *add_element(struct list *list, void *element);
+int clamp(int v, int max, int min);
+int max(int a, int b);
+int min(int a, int b);
+
+void quit();
+bool player_dead();
+
+struct node get_node(int x, int y);
+bool is_outside(int x, int y);
+bool is_solid(int x, int y);
+
+bool spawn(struct entity def, int x, int y, void *data);
+bool move(struct entity *entity, int xoff, int yoff);
+void add_health(struct entity *entity, int health);
+
+void register_air_function(struct generator_function arg);
+void register_input_handler(unsigned char c, struct input_handler arg);
+void register_render_component(void (*arg)(struct winsize ws));
 
 #endif

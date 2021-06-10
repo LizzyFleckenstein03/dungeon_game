@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "../game/game.h"
+#include "../score/score.h"
 
 static struct entity apple;
 
