@@ -13,7 +13,7 @@
 
 /* Shared variables */
 
-struct color black = {0, 0, 0};
+struct color black = {0};
 
 struct material wall;
 struct material air;
@@ -21,7 +21,6 @@ struct material outside;
 
 struct node map[MAP_WIDTH][MAP_HEIGHT];
 
-struct entity player;
 struct list *entities = & (struct list) {
 	.element = &player,
 	.next = NULL,
@@ -252,6 +251,28 @@ static void player_damage(struct entity *self, int damage)
 	damage_overlay += (double) damage * 0.5;
 }
 
+struct entity player = {
+	.name = "player",
+	.x = MAP_WIDTH / 2,
+	.y = MAP_HEIGHT / 2,
+	.color = {0},
+	.use_color = false,
+	.texture = "🙂",
+	.remove = false,
+	.meta = NULL,
+	.health = 10,
+	.max_health = 10,
+	.collide_with_entities = true,
+
+	.on_step = NULL,
+	.on_collide = NULL,
+	.on_collide_with_entity = NULL,
+	.on_spawn = NULL,
+	.on_remove = NULL,
+	.on_death = &player_death,
+	.on_damage = &player_damage,
+};
+
 /* Mapgen */
 
 static void mapgen_set_air(int x, int y)
@@ -350,18 +371,20 @@ static void generate_corridor_random(int x, int y)
 
 /* Rendering */
 
-static bool render_color(struct color color, double light, bool bg)
+static bool render_color(struct color color, double light, bool bg, bool use_color)
 {
 	if (light <= 0.0) {
 		set_color(black, bg);
 		return false;
-	} else {
+	} else if (use_color) {
 		if (damage_overlay > 0.0)
 			mix_color(&color, damage_overlay_color, damage_overlay * 2.0);
 
 		light_color(&color, light);
 
 		set_color(color, bg);
+		return true;
+	} else {
 		return true;
 	}
 }
@@ -393,12 +416,12 @@ static void render_map(struct winsize ws)
 			double dist = sqrt(x * x + y * y);
 			double light = 1.0 - (double) dist / (double) LIGHT;
 
-			render_color(node.material->color, light, true);
+			render_color(node.material->color, light, true, true);
 
 			struct entity *entity = render_entities[x + LIGHT][y + LIGHT];
 			render_entities[x + LIGHT][y + LIGHT] = NULL;
 
-			if (entity && render_color(entity->color, light, false))
+			if (entity && render_color(entity->color, light, false, entity->use_color))
 				printf("%s", entity->texture);
 			else
 				printf("  ");
@@ -573,27 +596,6 @@ __attribute__ ((constructor)) static void init()
 	outside = (struct material) {
 		.solid = true,
 		.color = black,
-	};
-
-	player = (struct entity) {
-		.name = "player",
-		.x = MAP_WIDTH / 2,
-		.y = MAP_HEIGHT / 2,
-		.color = get_color("#00FFFF"),
-		.texture = "🙂",
-		.remove = false,
-		.meta = NULL,
-		.health = 10,
-		.max_health = 10,
-		.collide_with_entities = true,
-
-		.on_step = NULL,
-		.on_collide = NULL,
-		.on_collide_with_entity = NULL,
-		.on_spawn = NULL,
-		.on_remove = NULL,
-		.on_death = &player_death,
-		.on_damage = &player_damage,
 	};
 
 	entity_collision_map[player.x][player.y] = &player;

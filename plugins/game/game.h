@@ -36,10 +36,11 @@ struct entity_step_data
 
 struct entity
 {
-	const char *name;
+	char *name;
 	int x, y;
 	struct color color;
-	const char *texture;
+	bool use_color;
+	char *texture;
 	bool remove;
 	void *meta;
 	int health;

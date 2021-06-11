@@ -3,8 +3,6 @@
 #include "../game/game.h"
 #include "../score/score.h"
 
-static struct entity monster;
-
 struct monster_data
 {
 	double timer;
@@ -41,34 +39,36 @@ static void monster_death(struct entity *self)
 	self->remove = true;
 }
 
+static struct entity monster_entity = {
+	.name = "monster",
+	.x = 0,
+	.y = 0,
+	.color = {0},
+	.use_color = false,
+	.texture = "👾",
+	.remove = false,
+	.meta = NULL,
+	.health = 5,
+	.max_health = 5,
+	.collide_with_entities = true,
+
+	.on_step = &monster_step,
+	.on_collide = NULL,
+	.on_collide_with_entity = &monster_collide_with_entity,
+	.on_spawn = &monster_spawn,
+	.on_remove = NULL,
+	.on_death = &monster_death,
+	.on_damage = NULL,
+};
+
+
 static void spawn_monster(int x, int y)
 {
-	spawn(monster, x, y, NULL);
+	spawn(monster_entity, x, y, NULL);
 }
 
 __attribute__((constructor)) static void init()
 {
-	monster = (struct entity) {
-		.name = "monster",
-		.x = 0,
-		.y = 0,
-		.color = get_color("#FF00F6"),
-		.texture = "👾",
-		.remove = false,
-		.meta = NULL,
-		.health = 5,
-		.max_health = 5,
-		.collide_with_entities = true,
-
-		.on_step = &monster_step,
-		.on_collide = NULL,
-		.on_collide_with_entity = &monster_collide_with_entity,
-		.on_spawn = &monster_spawn,
-		.on_remove = NULL,
-		.on_death = &monster_death,
-		.on_damage = NULL,
-	};
-
 	register_air_function((struct generator_function) {
 		.chance = 50,
 		.callback = &spawn_monster,

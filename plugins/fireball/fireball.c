@@ -3,8 +3,6 @@
 #include "../game/game.h"
 #include "../movement/movement.h"
 
-static struct entity fireball;
-
 struct fireball_data
 {
 	double timer;
@@ -45,6 +43,28 @@ static void fireball_collide_with_entity(struct entity *self, struct entity *oth
 	self->remove = true;
 }
 
+static struct entity fireball_entity = {
+	.name = "fireball",
+	.x = 0,
+	.y = 0,
+	.color = {0},
+	.use_color = true,
+	.texture = "⬤ ",
+	.remove = false,
+	.meta = NULL,
+	.health = 1,
+	.max_health = 1,
+	.collide_with_entities = true,
+
+	.on_step = &fireball_step,
+	.on_collide = &fireball_collide,
+	.on_collide_with_entity = &fireball_collide_with_entity,
+	.on_spawn = &fireball_spawn,
+	.on_remove = NULL,
+	.on_death = NULL,
+	.on_damage = NULL,
+};
+
 static void shoot_fireball()
 {
 	int vx, vy;
@@ -52,7 +72,7 @@ static void shoot_fireball()
 
 	dir_to_xy(last_player_move, &vx, &vy);
 
-	spawn(fireball, player.x + vx, player.y + vy, & (struct fireball_data) {
+	spawn(fireball_entity, player.x + vx, player.y + vy, & (struct fireball_data) {
 		.timer = 0.1,
 		.vx = vx,
 		.vy = vy,
@@ -61,26 +81,7 @@ static void shoot_fireball()
 
 __attribute__((constructor)) static void init()
 {
-	fireball = (struct entity) {
-		.name = "fireball",
-		.x = 0,
-		.y = 0,
-		.color = get_color("#FF6611"),
-		.texture = "⬤ ",
-		.remove = false,
-		.meta = NULL,
-		.health = 1,
-		.max_health = 1,
-		.collide_with_entities = true,
-
-		.on_step = &fireball_step,
-		.on_collide = &fireball_collide,
-		.on_collide_with_entity = &fireball_collide_with_entity,
-		.on_spawn = &fireball_spawn,
-		.on_remove = NULL,
-		.on_death = NULL,
-		.on_damage = NULL,
-	};
+	fireball_entity.color = get_color("#FF6611");
 
 	register_input_handler(' ', (struct input_handler) {
 		.run_if_dead = false,
