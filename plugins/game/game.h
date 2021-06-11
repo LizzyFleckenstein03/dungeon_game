@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <sys/ioctl.h>
+#include <stddef.h>
 #define MAP_HEIGHT 1000
 #define MAP_WIDTH 1000
 #define LIGHT 10
@@ -102,6 +103,7 @@ struct list *add_element(struct list *list, void *element);
 int clamp(int v, int max, int min);
 int max(int a, int b);
 int min(int a, int b);
+void *make_buffer(void *ptr, size_t size);
 
 void quit();
 bool player_dead();
@@ -114,8 +116,8 @@ bool spawn(struct entity def, int x, int y, void *data);
 bool move(struct entity *entity, int xoff, int yoff);
 void add_health(struct entity *entity, int health);
 
-void register_air_function(struct generator_function arg);
-void register_input_handler(unsigned char c, struct input_handler arg);
-void register_render_component(void (*arg)(struct winsize ws));
+void register_air_function(struct generator_function func);
+void register_input_handler(unsigned char c, struct input_handler handler);
+void register_render_component(void (*callback)(struct winsize ws));
 
 #endif

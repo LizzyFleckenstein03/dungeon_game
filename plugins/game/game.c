@@ -1,7 +1,5 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdlib.h>
-#include <stddef.h>
 #include <unistd.h>
 #include <assert.h>
 #include <ctype.h>
@@ -10,8 +8,8 @@
 #include <termios.h>
 #include <math.h>
 #include <pthread.h>
+#include <string.h>
 #include "game.h"
-#define MAKEBUF(type) type *buf = malloc(sizeof(type)); *buf = arg;
 
 /* Shared variables */
 
@@ -119,6 +117,14 @@ int min(int a, int b)
 	return a < b ? a : b;
 }
 
+void *make_buffer(void *ptr, size_t size)
+{
+	void *buf = malloc(size);
+	memcpy(buf, ptr, size);
+
+	return buf;
+}
+
 /* Game-related utility functions */
 
 void quit()
@@ -216,24 +222,22 @@ void add_health(struct entity *entity, int health)
 
 /* Register callback functions */
 
-void register_air_function(struct generator_function arg)
+void register_air_function(struct generator_function func)
 {
-	MAKEBUF(struct generator_function);
-	air_functions = add_element(air_functions, buf);
+	air_functions = add_element(air_functions, make_buffer(&func, sizeof(struct generator_function)));
 }
 
-void register_input_handler(unsigned char c, struct input_handler arg)
+void register_input_handler(unsigned char c, struct input_handler handler)
 {
 	if (input_handlers[c])
 		return;
 
-	MAKEBUF(struct input_handler);
-	input_handlers[c] = buf;
+	input_handlers[c] = make_buffer(&handler, sizeof(struct input_handler));
 }
 
-void register_render_component(void (*arg)(struct winsize ws))
+void register_render_component(void (*callback)(struct winsize ws))
 {
-	render_components = add_element(render_components, arg);
+	render_components = add_element(render_components, callback);
 };
 
 /* Player */
@@ -254,9 +258,12 @@ static void mapgen_set_air(int x, int y)
 {
 	if (is_outside(x, y))
 		return;
+
 	if (map[x][y].material == &air)
 		return;
+
 	map[x][y] = (struct node) {&air};
+
 	for (struct list *ptr = air_functions; ptr != NULL; ptr = ptr->next) {
 		struct generator_function *func = ptr->element;
 
@@ -456,8 +463,6 @@ static void *input_thread(void *unused)
 
 void game()
 {
-	srand(time(0));
-
 	struct sigaction sa;
 	sa.sa_handler = &handle_interrupt;
 	sigaction(SIGINT, &sa, NULL);
@@ -553,6 +558,8 @@ void game()
 
 __attribute__ ((constructor)) static void init()
 {
+	srand(time(0));
+
 	wall = (struct material) {
 		.solid = true,
 		.color = get_color("#5B2F00"),
