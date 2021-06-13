@@ -94,6 +94,7 @@ static struct item fireball_item = {
 
 	.on_use = &shoot_fireball_item,
 	.on_destroy = NULL,
+	.on_create = NULL,
 };
 
 static void shoot_if_has_fireball()

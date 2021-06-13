@@ -18,6 +18,7 @@ static struct item cherry_item = {
 
 	.on_use = &use_cherry,
 	.on_destroy = NULL,
+	.on_create = NULL,
 };
 
 static void cherry_step(struct entity *self, struct entity_step_data stepdata)

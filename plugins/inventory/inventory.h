@@ -16,6 +16,7 @@ struct item
 
 	bool (*on_use)(struct itemstack *stack);
 	void (*on_destroy)(struct itemstack *stack);
+	void (*on_create)(struct itemstack *stack);
 };
 
 struct inventory

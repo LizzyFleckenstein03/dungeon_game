@@ -29,7 +29,11 @@ void inventory_add(struct inventory *self, struct itemstack stack)
 		}
 	}
 
-	*ptr = add_element(*ptr, make_buffer(&stack, sizeof(struct itemstack)));
+	struct itemstack *buf = make_buffer(&stack, sizeof(struct itemstack));
+	*ptr = add_element(*ptr, buf);
+
+	if (buf->item->on_create)
+		buf->item->on_create(buf);
 }
 
 /*
@@ -80,6 +84,9 @@ static void decrease_item_count(struct list **ptr, struct itemstack *stack)
 
 		if (stack->item->on_destroy)
 			stack->item->on_destroy(stack);
+
+		if (stack->meta)
+			free(stack->meta);
 
 		free(stack);
 		free(*ptr);
