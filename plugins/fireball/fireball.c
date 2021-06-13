@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include "../game/game.h"
 #include "../movement/movement.h"
+#include "../inventory/inventory.h"
 
 struct fireball_data
 {
@@ -39,7 +40,7 @@ static void fireball_collide(struct entity *self, int x, int y)
 
 static void fireball_collide_with_entity(struct entity *self, struct entity *other)
 {
-	add_health(other, -(1 + rand() % 3));
+	add_health(other, -(3 + rand() % 3));
 	self->remove = true;
 }
 
@@ -79,12 +80,40 @@ static void shoot_fireball()
 	});
 }
 
+static bool shoot_fireball_item(struct itemstack *stack)
+{
+	(void) stack;
+
+	shoot_fireball();
+	return true;
+}
+
+static struct item fireball_item = {
+	.name = "Fireball",
+	.stackable = true,
+
+	.on_use = &shoot_fireball_item,
+	.on_destroy = NULL,
+};
+
+static void shoot_if_has_fireball()
+{
+	if (inventory_remove(&player_inventory, &fireball_item))
+		shoot_fireball();
+}
+
 __attribute__((constructor)) static void init()
 {
 	fireball_entity.color = get_color("#FF6611");
 
 	register_input_handler(' ', (struct input_handler) {
 		.run_if_dead = false,
-		.callback = &shoot_fireball,
+		.callback = &shoot_if_has_fireball,
+	});
+
+	inventory_add(&player_inventory, (struct itemstack) {
+		.item = &fireball_item,
+		.count = 7,
+		.meta = NULL,
 	});
 }
