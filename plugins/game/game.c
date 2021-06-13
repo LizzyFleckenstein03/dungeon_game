@@ -38,6 +38,7 @@ static struct list *air_functions = NULL;
 static struct input_handler *input_handlers[256] = {NULL};
 static struct entity *render_entities[LIGHT * 2 + 1][LIGHT * 2 + 1];
 static struct list *render_components = NULL;
+static struct list *globalsteps = NULL;
 
 /* Helper functions */
 
@@ -238,6 +239,11 @@ void register_render_component(void (*callback)(struct winsize ws))
 {
 	render_components = add_element(render_components, callback);
 };
+
+void register_globalstep(struct globalstep step)
+{
+	globalsteps = add_element(globalsteps, make_buffer(&step, sizeof(struct globalstep)));
+}
 
 /* Player */
 
@@ -515,6 +521,13 @@ void game()
 		ts_old = ts;
 
 		bool dead = player_dead();
+
+		for (struct list *ptr = globalsteps; ptr != NULL; ptr = ptr->next) {
+			struct globalstep *step = ptr->element;
+
+			if (step->run_if_dead || ! dead)
+				step->callback(dtime);
+		}
 
 		if (! dead && damage_overlay > 0.0) {
 			damage_overlay -= dtime;

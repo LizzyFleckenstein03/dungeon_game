@@ -74,6 +74,12 @@ struct input_handler
 	void (*callback)();
 };
 
+struct globalstep
+{
+	bool run_if_dead;
+	void (*callback)(double dtime);
+};
+
 enum direction
 {
 	UP,
@@ -120,5 +126,6 @@ void add_health(struct entity *entity, int health);
 void register_air_function(struct generator_function func);
 void register_input_handler(unsigned char c, struct input_handler handler);
 void register_render_component(void (*callback)(struct winsize ws));
+void register_globalstep(struct globalstep step);
 
 #endif
