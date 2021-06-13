@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <sys/ioctl.h>
 #include <stddef.h>
+#include <time.h>
 #define MAP_HEIGHT 1000
 #define MAP_WIDTH 1000
 #define LIGHT 10
@@ -111,6 +112,7 @@ int clamp(int v, int max, int min);
 int max(int a, int b);
 int min(int a, int b);
 void *make_buffer(void *ptr, size_t size);
+double calculate_dtime(struct timespec from, struct timespec to);
 
 void quit();
 bool player_dead();

@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <assert.h>
 #include <ctype.h>
-#include <time.h>
 #include <signal.h>
 #include <termios.h>
 #include <math.h>
@@ -123,6 +122,11 @@ void *make_buffer(void *ptr, size_t size)
 	memcpy(buf, ptr, size);
 
 	return buf;
+}
+
+double calculate_dtime(struct timespec from, struct timespec to)
+{
+	return (double) (to.tv_sec - from.tv_sec) + (double) (to.tv_nsec - from.tv_nsec) / 1000000000.0;
 }
 
 /* Game-related utility functions */
@@ -517,7 +521,7 @@ void game()
 
 	while (running) {
 		clock_gettime(CLOCK_REALTIME, &ts);
-		double dtime = (double) (ts.tv_sec - ts_old.tv_sec) + (double) (ts.tv_nsec - ts_old.tv_nsec) / 1000000000.0;
+		double dtime = calculate_dtime(ts_old, ts);
 		ts_old = ts;
 
 		bool dead = player_dead();
