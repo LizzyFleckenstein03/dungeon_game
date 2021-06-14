@@ -129,6 +129,48 @@ double calculate_dtime(struct timespec from, struct timespec to)
 	return (double) (to.tv_sec - from.tv_sec) + (double) (to.tv_nsec - from.tv_nsec) / 1000000000.0;
 }
 
+/*struct roman_conversion_rule
+{
+	int number;
+	const char *symbol;
+};*/
+
+static struct
+{
+	int number;
+	const char *symbol;
+} roman_ct[13] = {
+	{1000, "M"},
+	{900, "CM"},
+	{500, "D"},
+	{400, "CD"},
+	{100, "C"},
+	{90, "XC"},
+	{50, "L"},
+	{40, "XL"},
+	{10, "X"},
+	{9, "IX"},
+	{5, "V"},
+	{4, "IV"},
+	{1, "I"}
+};
+
+void get_roman_numeral(int number, char **ptr, size_t *len)
+{
+	*ptr = NULL;
+	*len = 0;
+
+	for (int i = 0; i < 13; i++) {
+		while (number >= roman_ct[i].number) {
+			number -= roman_ct[i].number;
+			size_t old_len = *len;
+			*len += 1 + i % 2;
+			*ptr = realloc(*ptr, *len + 1);
+			strcpy(*ptr + old_len, roman_ct[i].symbol);
+		}
+	}
+}
+
 /* Game-related utility functions */
 
 void quit()

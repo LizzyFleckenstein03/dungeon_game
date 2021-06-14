@@ -113,6 +113,7 @@ int max(int a, int b);
 int min(int a, int b);
 void *make_buffer(void *ptr, size_t size);
 double calculate_dtime(struct timespec from, struct timespec to);
+void get_roman_numeral(int number, char **ptr, size_t *len);
 
 void quit();
 bool player_dead();

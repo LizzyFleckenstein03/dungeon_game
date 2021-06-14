@@ -8,6 +8,9 @@ You are in a pixely dungeon. There is no exit, the goal of the game is to surviv
 You can use WASD to move up / left / down / right. Use Q to quit and Space to shoot fireballs if you have them in your inventory. Use E to use your sword if you have one in your inventory.
 To navigate the inventory, use the arrow keys (up and down) to select an item and then press enter to use it.
 
+## Score
+You can gain score from various things explained later. You need a certain amount of score to reach the next level; e.g. to reach level 1 when you are level 0 you need 5 score, to reach level 2 you need 10, for level 3 15 and so on. When you reach a new level, your score is reset, to to reach level 3 you'll need 5 + 10 + 15 = 30 score in total.
+
 ## The map
 
 The map consists of nodes and entities. The nodes are static; they cannot move and you cannot break or replace them. They are automatically generated on startup. Some nodes are solid, which means entities collide with them, others are not.
@@ -64,9 +67,9 @@ In the lower center of your screen you can see 10 hearts. Depending on whether t
 
 If you use an item that needs to recharge after being used, a recharge meter will show. It tells you the recharge percentage and visualizes it using a bar. You cannot use
 
-### The score count
+### The score bar
 
-In the upper light corner there is a display that tells you your current score.
+On the top of the screen a green bar displays how close you are to reaching the next score level. It also shows the current level in roman numerals at the center (it will not display the level if the level is 0).
 
 ### The inventory
 
