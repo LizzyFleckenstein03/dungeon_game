@@ -63,10 +63,16 @@ struct list
 	struct list *next;
 };
 
+enum mg_context
+{
+	MG_CTX_CORRIDOR,
+	MG_CTX_ROOM,
+};
+
 struct generator_function
 {
 	int chance;
-	void (*callback)(int x, int y);
+	void (*callback)(int x, int y, enum mg_context ctx);
 };
 
 struct input_handler

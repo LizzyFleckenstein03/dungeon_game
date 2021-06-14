@@ -33,8 +33,6 @@ static void fireball_step(struct entity *self, struct entity_step_data stepdata)
 
 static void fireball_collide(struct entity *self, int x, int y)
 {
-	(void) x, y;
-
 	self->remove = true;
 }
 
@@ -82,8 +80,6 @@ static void shoot_fireball()
 
 static bool shoot_fireball_item(struct itemstack *stack)
 {
-	(void) stack;
-
 	shoot_fireball();
 	return true;
 }

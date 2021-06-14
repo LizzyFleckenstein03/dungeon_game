@@ -7,7 +7,6 @@ static struct color darkgray;
 
 static bool use_item(struct itemstack *stack)
 {
-	(void) stack;
 	return true;
 }
 

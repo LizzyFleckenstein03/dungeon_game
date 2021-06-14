@@ -34,7 +34,7 @@ static struct entity apple_entity = {
 	.on_damage = NULL,
 };
 
-static void spawn_apple(int x, int y)
+static void spawn_apple(int x, int y, enum mg_context ctx)
 {
 	spawn(apple_entity, x, y, NULL);
 }

@@ -7,8 +7,6 @@
 
 static bool use_broken_sword(struct itemstack *stack)
 {
-	(void) stack;
-
 	return true;
 }
 

@@ -10,8 +10,6 @@ struct monster_data
 
 static void monster_spawn(struct entity *self, void *data)
 {
-	(void) data;
-
 	self->meta = malloc(sizeof(struct monster_data));
 	((struct monster_data *) self->meta)->timer = 0.5;
 }
@@ -62,7 +60,7 @@ static struct entity monster_entity = {
 };
 
 
-static void spawn_monster(int x, int y)
+static void spawn_monster(int x, int y, enum mg_context ctx)
 {
 	spawn(monster_entity, x, y, NULL);
 }

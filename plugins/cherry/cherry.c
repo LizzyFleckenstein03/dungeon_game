@@ -6,8 +6,6 @@
 
 static bool use_cherry(struct itemstack *stack)
 {
-	(void) stack;
-
 	add_health(&player, 2);
 	return true;
 }
@@ -56,7 +54,7 @@ static struct entity cherry_entity = {
 	.on_damage = NULL,
 };
 
-static void spawn_cherry(int x, int y)
+static void spawn_cherry(int x, int y, enum mg_context ctx)
 {
 	spawn(cherry_entity, x, y, NULL);
 }

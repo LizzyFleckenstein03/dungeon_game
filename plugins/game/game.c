@@ -129,12 +129,6 @@ double calculate_dtime(struct timespec from, struct timespec to)
 	return (double) (to.tv_sec - from.tv_sec) + (double) (to.tv_nsec - from.tv_nsec) / 1000000000.0;
 }
 
-/*struct roman_conversion_rule
-{
-	int number;
-	const char *symbol;
-};*/
-
 static struct
 {
 	int number;
@@ -327,7 +321,7 @@ struct entity player = {
 
 /* Mapgen */
 
-static void mapgen_set_air(int x, int y)
+static void mapgen_set_air(int x, int y, enum mg_context ctx)
 {
 	if (is_outside(x, y))
 		return;
@@ -341,7 +335,7 @@ static void mapgen_set_air(int x, int y)
 		struct generator_function *func = ptr->element;
 
 		if (rand() % func->chance == 0)
-			func->callback(x, y);
+			func->callback(x, y, ctx);
 	}
 }
 
@@ -363,7 +357,7 @@ static void generate_room(int origin_x, int origin_y)
 		}
 
 		for (int y = -up; y <= down; y++)
-			mapgen_set_air(origin_x + x, origin_y + y);
+			mapgen_set_air(origin_x + x, origin_y + y, MG_CTX_ROOM);
 	}
 }
 
@@ -385,7 +379,7 @@ static void generate_corridor(int lx, int ly, enum direction ldir)
 		return;
 	}
 
-	mapgen_set_air(lx, ly);
+	mapgen_set_air(lx, ly, MG_CTX_CORRIDOR);
 
 	int x, y;
 
@@ -511,8 +505,6 @@ static void render()
 
 static void handle_interrupt(int signal)
 {
-	(void) signal;
-
 	quit();
 }
 
@@ -526,8 +518,6 @@ static void handle_input(unsigned char c)
 
 static void *input_thread(void *unused)
 {
-	(void) unused;
-
 	while (running)
 		handle_input(tolower(fgetc(stdin)));
 
