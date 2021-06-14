@@ -3,6 +3,7 @@
 #include "../game/game.h"
 #include "../movement/movement.h"
 #include "../inventory/inventory.h"
+#include "../recharge/recharge.h"
 
 static bool use_broken_sword(struct itemstack *stack)
 {
@@ -22,6 +23,9 @@ static struct item broken_sword = {
 
 static bool use_sword(struct itemstack *stack)
 {
+	if (! is_charged())
+		return false;
+
 	int x, y;
 	x = player.x;
 	y = player.y;
@@ -35,6 +39,8 @@ static bool use_sword(struct itemstack *stack)
 
 		if (rand() % 100 == 0)
 			stack->item = &broken_sword;
+
+		recharge(1.0, "⚔ ");
 	}
 
 	return false;
