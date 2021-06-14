@@ -42,7 +42,8 @@ static void spawn_apple(int x, int y, enum mg_context ctx)
 __attribute__((constructor)) static void init()
 {
 	register_air_function((struct generator_function) {
-		.chance = 25,
+		.corridor_chance = 25,
+		.room_chance = 50,
 		.callback = &spawn_apple,
 	});
 }

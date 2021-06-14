@@ -71,7 +71,8 @@ enum mg_context
 
 struct generator_function
 {
-	int chance;
+	int corridor_chance;
+	int room_chance;
 	void (*callback)(int x, int y, enum mg_context ctx);
 };
 

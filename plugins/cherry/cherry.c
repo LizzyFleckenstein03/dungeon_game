@@ -62,7 +62,8 @@ static void spawn_cherry(int x, int y, enum mg_context ctx)
 __attribute__((constructor)) static void init()
 {
 	register_air_function((struct generator_function) {
-		.chance = 100,
+		.corridor_chance = 100,
+		.room_chance = 100,
 		.callback = &spawn_cherry,
 	});
 }
