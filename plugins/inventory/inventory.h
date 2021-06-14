@@ -26,6 +26,7 @@ struct inventory
 
 void inventory_add(struct inventory *self, struct itemstack stack);
 bool inventory_remove(struct inventory *self, struct item *item);
+struct itemstack *inventory_find(struct inventory *self, struct item *item);
 
 extern struct inventory player_inventory;
 #endif

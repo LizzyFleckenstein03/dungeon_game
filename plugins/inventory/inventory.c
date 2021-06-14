@@ -75,8 +75,10 @@ bool inventory_remove(struct inventory *self, struct itemstack *stack)
 
 */
 
-static void decrease_item_count(struct list **ptr, struct itemstack *stack)
+static void decrease_item_count(struct list **ptr)
 {
+	struct itemstack *stack = (*ptr)->element;
+
 	stack->count--;
 
 	if (stack->count == 0) {
@@ -95,19 +97,34 @@ static void decrease_item_count(struct list **ptr, struct itemstack *stack)
 	}
 }
 
-bool inventory_remove(struct inventory *self, struct item *item)
+static struct list **find_item(struct inventory *self, struct item *item)
 {
 	for (struct list **ptr = &self->stacks; *ptr != NULL; ptr = &(*ptr)->next) {
 		struct itemstack *stack = (*ptr)->element;
 
-		if (stack->item == item) {
-			decrease_item_count(ptr, stack);
+		if (stack->item == item)
+			return ptr;
+	}
 
-			return true;
-		}
+	return NULL;
+}
+
+bool inventory_remove(struct inventory *self, struct item *item)
+{
+	struct list **ptr = find_item(self, item);
+
+	if (ptr) {
+		decrease_item_count(ptr);
+		return true;
 	}
 
 	return false;
+}
+
+struct itemstack *inventory_find(struct inventory *self, struct item *item)
+{
+	struct list **ptr = find_item(self, item);
+	return ptr ? (*ptr)->element : NULL;
 }
 
 static void handle_enter()
@@ -119,7 +136,7 @@ static void handle_enter()
 			struct itemstack *stack = (*ptr)->element;
 
 			if (stack->item->on_use && stack->item->on_use(stack))
-				decrease_item_count(ptr, stack);
+				decrease_item_count(ptr);
 
 			return;
 		}
