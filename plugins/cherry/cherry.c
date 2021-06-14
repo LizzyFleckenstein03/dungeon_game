@@ -3,6 +3,7 @@
 #include "../game/game.h"
 #include "../score/score.h"
 #include "../inventory/inventory.h"
+#include "../loot/loot.h"
 
 static bool use_cherry(struct itemstack *stack)
 {
@@ -65,6 +66,13 @@ __attribute__((constructor)) static void init()
 		.corridor_chance = 100,
 		.room_chance = 100,
 		.callback = &spawn_cherry,
+	});
+
+	register_loot((struct loot) {
+		.item = &cherry_item,
+		.chance = 2,
+		.min = 3,
+		.max = 10,
 	});
 }
 

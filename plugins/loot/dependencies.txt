@@ -1,4 +1,2 @@
 game
-movement
 inventory
-loot

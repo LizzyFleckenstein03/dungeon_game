@@ -334,7 +334,9 @@ static void mapgen_set_air(int x, int y, enum mg_context ctx)
 	for (struct list *ptr = air_functions; ptr != NULL; ptr = ptr->next) {
 		struct generator_function *func = ptr->element;
 
-		if (rand() % (ctx == MG_CTX_CORRIDOR ? func->corridor_chance : func->room_chance) == 0)
+		int chance = ctx == MG_CTX_CORRIDOR ? func->corridor_chance : func->room_chance;
+
+		if (chance && rand() % chance == 0)
 			func->callback(x, y, ctx);
 	}
 }

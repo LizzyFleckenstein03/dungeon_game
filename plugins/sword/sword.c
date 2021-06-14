@@ -4,6 +4,7 @@
 #include "../movement/movement.h"
 #include "../inventory/inventory.h"
 #include "../recharge/recharge.h"
+#include "../loot/loot.h"
 
 static bool use_broken_sword(struct itemstack *stack)
 {
@@ -72,5 +73,12 @@ __attribute__((constructor)) static void init()
 	register_input_handler('e', (struct input_handler) {
 		.run_if_dead = false,
 		.callback = &handle_e,
+	});
+
+	register_loot((struct loot) {
+		.chance = 7,
+		.item = &sword,
+		.min = 1,
+		.max = 1,
 	});
 }

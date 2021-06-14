@@ -3,6 +3,7 @@
 #include "../game/game.h"
 #include "../movement/movement.h"
 #include "../inventory/inventory.h"
+#include "../loot/loot.h"
 
 struct fireball_data
 {
@@ -112,5 +113,12 @@ __attribute__((constructor)) static void init()
 		.item = &fireball_item,
 		.count = 7,
 		.meta = NULL,
+	});
+
+	register_loot((struct loot) {
+		.item = &fireball_item,
+		.chance = 3,
+		.min = 4,
+		.max = 7,
 	});
 }
