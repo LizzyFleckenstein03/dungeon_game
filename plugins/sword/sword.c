@@ -55,11 +55,24 @@ static struct item sword = {
 	.on_create = NULL,
 };
 
+static void handle_e()
+{
+	struct itemstack *stack = inventory_find(&player_inventory, &sword);
+
+	if (stack)
+		use_sword(stack);
+}
+
 __attribute__((constructor)) static void init()
 {
 	inventory_add(&player_inventory, (struct itemstack) {
 		.item = &sword,
 		.count = 1,
 		.meta = NULL,
+	});
+
+	register_input_handler('e', (struct input_handler) {
+		.run_if_dead = false,
+		.callback = &handle_e,
 	});
 }

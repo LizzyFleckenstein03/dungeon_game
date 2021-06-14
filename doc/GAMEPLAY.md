@@ -5,7 +5,7 @@
 You are in a pixely dungeon. There is no exit, the goal of the game is to survive and to collect XP (score). There are monsters and items in the world; you have to collect things and defeat monsters.
 
 ## Controls
-You can use WASD to move up / left / down / right. Use Q to quit and Space to shoot fireballs if you have them in your inventory.
+You can use WASD to move up / left / down / right. Use Q to quit and Space to shoot fireballs if you have them in your inventory. Use E to use your sword if you have one in your inventory.
 To navigate the inventory, use the arrow keys (up and down) to select an item and then press enter to use it.
 
 ## The map
