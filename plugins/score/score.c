@@ -53,7 +53,7 @@ static void render_score(struct winsize ws)
 	set_color((struct color) {bar_flash, 255, bar_flash}, true);
 
 	int level_flash = clamp(level_timer * 255, 0, 255);
-	set_color((struct color) {255, 255, 255 - level_flash}, false);
+	set_color((struct color) {level_flash, 128 + (level_flash / 2), level_flash}, false);
 
 	size_t level_len = level_symbol_len > 0 ? 6 + level_symbol_len + 1 : 0;
 	char level_display[level_len];
