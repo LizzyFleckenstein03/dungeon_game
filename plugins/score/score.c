@@ -11,6 +11,7 @@ static char *level_symbol = NULL;
 static size_t level_symbol_len = 0;
 static double score_timer = 0.0;
 static double level_timer = 0.0;
+static struct list *on_level_up = NULL;
 
 static void level_up()
 {
@@ -23,6 +24,9 @@ static void level_up()
 	get_roman_numeral(level, &level_symbol, &level_symbol_len);
 
 	level_timer = 2.0;
+
+	for (struct list *ptr = on_level_up; ptr != NULL; ptr = ptr->next)
+		((void (*)(int)) ptr->element)(level);
 }
 
 void add_score(int s)
@@ -45,6 +49,11 @@ int get_score()
 int get_level()
 {
 	return level;
+}
+
+void register_on_level_up(void (*callback)(int new_level))
+{
+	on_level_up = add_element(on_level_up, callback);
 }
 
 static void render_score(struct winsize ws)
