@@ -41,7 +41,7 @@ static void *load_plugin(const char *name)
 	char library_name[1 + 1 + 7 + 1 + len + 1 + len + 1 + 2 + 1];
 	sprintf(library_name, "./plugins/%s/%s.so", name, name);
 
-	void *handle = dlmopen(LM_ID_BASE, library_name, RTLD_NOW | RTLD_GLOBAL);
+	void *handle = dlopen(library_name, RTLD_NOW | RTLD_GLOBAL);
 
 	if (! handle) {
 		printf("%s\n", dlerror());
